@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leftover Lab — Recipes from what you've got</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="hero">
+        <div class="container">
+            <h1>🧪 Leftover Lab</h1>
+            <p class="tagline">Turn what's in your pantry and fridge into dinner.</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="pantry">
+            <h2>What have you got?</h2>
+            <p class="hint">Type an ingredient and press Enter. Add as many as you like.</p>
+
+            <form id="ingredient-form" class="ingredient-form">
+                <input
+                    type="text"
+                    id="ingredient-input"
+                    placeholder="e.g. chicken, rice, tomato"
+                    autocomplete="off"
+                    required
+                />
+                <button type="submit">Add</button>
+            </form>
+
+            <ul id="ingredient-list" class="ingredient-list" aria-live="polite"></ul>
+
+            <button id="find-recipes" class="primary-btn" disabled>Find recipes</button>
+        </section>
+
+        <section id="results" class="results" aria-live="polite"></section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Built with leftovers and curiosity. © <span id="year"></span> Leftover Lab.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
