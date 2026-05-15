@@ -4,45 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leftover Lab — Recipes from what you've got</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=DM+Sans:wght@400;500;600;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header class="hero">
         <div class="container">
-            <h1>🧪 Leftover Lab</h1>
-            <p class="tagline">Turn what's in your pantry and fridge into dinner.</p>
+            <h1>
+                Leftover <em>Lab</em>
+            </h1>
+            <p class="tagline">Every pantry has potential</p>
         </div>
     </header>
 
     <main class="container">
-        <section class="pantry">
-            <h2>What have you got?</h2>
-            <p class="hint">Type an ingredient and press Enter. Add as many as you like.</p>
+        <nav class="tabs" role="tablist" aria-label="View">
+            <button class="tab active" role="tab" aria-selected="true" data-tab="find" id="tab-find">
+                <svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <line x1="15.5" y1="15.5" x2="20" y2="20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+                Find recipes
+            </button>
+            <button class="tab" role="tab" aria-selected="false" data-tab="favourites" id="tab-favourites">
+                <svg class="tab-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M12 20.35S5 16.5 2.9 12.6C1 9 3 5.5 6.2 5.5c1.9 0 3.4.95 3.95 1.85.5.83.65 1.05.85 1.05s.35-.22.85-1.05C12.4 6.45 13.9 5.5 15.8 5.5 19 5.5 21 9 19.1 12.6 17 16.5 12 20.35 12 20.35z"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+                Favourites
+                <span id="tab-fav-count" class="tab-count" hidden>0</span>
+            </button>
+        </nav>
 
-            <form id="ingredient-form" class="ingredient-form">
-                <input
-                    type="text"
-                    id="ingredient-input"
-                    placeholder="e.g. chicken, rice, tomato"
-                    autocomplete="off"
-                    required
-                />
-                <button type="submit">Add</button>
-            </form>
+        <div id="panel-find" class="tab-panel" role="tabpanel" aria-labelledby="tab-find">
+            <section class="pantry">
+                <h2>What have you got?</h2>
+                <p class="hint">Type an ingredient and press Enter. Add as many as you like.</p>
 
-            <ul id="ingredient-list" class="ingredient-list" aria-live="polite"></ul>
+                <form id="ingredient-form" class="ingredient-form">
+                    <div class="input-wrap">
+                        <input
+                            type="text"
+                            id="ingredient-input"
+                            placeholder="Start typing — e.g. chicken, rice, tomato"
+                            autocomplete="off"
+                            spellcheck="false"
+                            role="combobox"
+                            aria-autocomplete="list"
+                            aria-expanded="false"
+                            aria-controls="ingredient-suggestions"
+                            required
+                        />
+                        <ul id="ingredient-suggestions" class="suggestions" role="listbox" hidden></ul>
+                    </div>
+                    <button type="submit">Add</button>
+                </form>
 
-            <button id="find-recipes" class="primary-btn" disabled>Find recipes</button>
-        </section>
+                <ul id="ingredient-list" class="ingredient-list" aria-live="polite"></ul>
 
-        <section id="results" class="results" aria-live="polite"></section>
-    </main>
+                <button id="find-recipes" class="primary-btn" disabled>Find recipes</button>
+            </section>
 
-    <footer>
-        <div class="container">
-            <p>Built with leftovers and curiosity. © <span id="year"></span> Leftover Lab.</p>
+            <section id="results" class="results" aria-live="polite"></section>
         </div>
-    </footer>
+
+        <div id="panel-favourites" class="tab-panel" role="tabpanel" aria-labelledby="tab-favourites" hidden>
+            <div class="favourites-header">
+                <h2>❤ My <em>favourites</em></h2>
+                <span id="favourites-count" class="favourites-count"></span>
+            </div>
+            <div id="favourites-grid" class="results"></div>
+            <div id="favourites-empty" class="empty" hidden>
+                <div class="empty-icon">💚</div>
+                <h3>No favourites yet</h3>
+                <p>Tap the heart on any recipe to save it here. Your favourites stick around even after you close the page.</p>
+            </div>
+        </div>
+    </main>
 
     <script src="app.js"></script>
 </body>
