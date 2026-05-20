@@ -620,8 +620,8 @@ function buildRecipeCard(r, idx, isFav = false) {
     const pct = r.ingredients?.length ? Math.round((matched.length / r.ingredients.length) * 100) : 0;
     const totalTime = r.totalMinutes || ((r.detailed?.prep || 0) + (r.detailed?.cook || 0));
     if (!r.imgSeed) r.imgSeed = idx + 1 + Math.floor(Math.random() * 1000);
-    const imgPrompt = encodeURIComponent(`${r.name}, professional food photography, top down, rustic plate, natural light, appetizing, high detail`);
-    const imgUrl = `https://image.pollinations.ai/prompt/${imgPrompt}?width=600&height=400&nologo=true&seed=${r.imgSeed}`;
+    const imgPrompt = encodeURIComponent(`${r.name}, food photo, top down, plate`);
+    const imgUrl = `https://image.pollinations.ai/prompt/${imgPrompt}?width=384&height=256&model=turbo&enhance=false&nofeed=true&nologo=true&seed=${r.imgSeed}`;
     const showMatch = pantry.size > 0 && (r.ingredients?.length || 0) > 0;
     card.innerHTML = `
         <div class="recipe-card-image">
