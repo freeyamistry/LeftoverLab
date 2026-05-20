@@ -1097,7 +1097,6 @@ function renderRecipeContent(overlay, recipe) {
     modal.innerHTML = `
         <button class="modal-close" type="button" aria-label="Close"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
         <div class="modal-content">
-            <div class="ai-tag"><span class="material-symbols-rounded chip-icon" aria-hidden="true">auto_awesome</span>Generated for your pantry</div>
             <div class="recipe-title-row">
                 <h2 class="recipe-title">${recipe.name}</h2>
                 <div class="modal-fav">${heartButtonHTML(recipe)}</div>
