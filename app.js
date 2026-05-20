@@ -538,10 +538,7 @@ function heartButtonHTML(recipe) {
     const key = favKey(recipe);
     const active = favourites.has(key);
     return `<button type="button" class="fav-btn ${active ? "active" : ""}" data-fav-key="${key}" aria-pressed="${active}" aria-label="${active ? "Remove from favourites" : "Save to favourites"}">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path class="heart-fill" d="M12 21s-7-4.35-9.5-8.5C.5 9 2.5 5 6 5c2 0 3.5 1 4 2 .5 1 0 0 0 0s.5-1 0 0c.5-1 2-2 4-2 3.5 0 5.5 4 3.5 7.5C19 16.65 12 21 12 21z"/>
-            <path class="heart-stroke" d="M12 20.35S5 16.5 2.9 12.6C1 9 3 5.5 6.2 5.5c1.9 0 3.4.95 3.95 1.85.5.83.65 1.05.85 1.05s.35-.22.85-1.05C12.4 6.45 13.9 5.5 15.8 5.5 19 5.5 21 9 19.1 12.6 17 16.5 12 20.35 12 20.35z" fill="none" stroke-width="1.6"/>
-        </svg>
+        <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
     </button>`;
 }
 
@@ -628,12 +625,12 @@ function buildRecipeCard(r, idx, isFav = false) {
             <div class="img-skeleton"></div>
             <img alt="${r.name}" loading="lazy" src="${imgUrl}" />
             ${heartButtonHTML(r)}
-            ${totalTime ? `<span class="time-chip">⏱ ${totalTime} min</span>` : ""}
+            ${totalTime ? `<span class="time-chip"><span class="material-symbols-rounded chip-icon" aria-hidden="true">schedule</span>${totalTime} min</span>` : ""}
         </div>
         <div class="recipe-card-body">
             <h3>${r.name}</h3>
             ${showMatch
-                ? `<p class="match">✓ ${matched.length}/${r.ingredients.length} ingredients · ${pct}% match</p>
+                ? `<p class="match"><span class="material-symbols-rounded match-icon" aria-hidden="true">check_circle</span>${matched.length}/${r.ingredients.length} ingredients · ${pct}% match</p>
                    <div class="match-bar"><div class="match-bar-fill" style="width:${pct}%"></div></div>`
                 : `<p class="match saved-meta">Saved ${formatSavedAt(r.savedAt)}</p>`}
             <strong>Ingredients</strong>
@@ -646,7 +643,7 @@ function buildRecipeCard(r, idx, isFav = false) {
     img.addEventListener("error", () => {
         const wrap = card.querySelector(".recipe-card-image");
         wrap.classList.add("img-fallback");
-        wrap.querySelector(".img-skeleton").innerHTML = "<span>🍽️</span>";
+        wrap.querySelector(".img-skeleton").innerHTML = '<span class="material-symbols-rounded fallback-icon" aria-hidden="true">restaurant</span>';
     });
     attachHeartHandler(card.querySelector(".fav-btn"), r);
     card.querySelector(".generate-btn").addEventListener("click", () => openFullRecipe(r));
@@ -766,14 +763,14 @@ function localFallback(have) {
 function renderEmptyState(isError) {
     if (isError) {
         return `<div class="empty empty-error">
-            <div class="empty-icon">🍃</div>
+            <span class="material-symbols-rounded empty-icon" aria-hidden="true">eco</span>
             <h3>No more recipes found</h3>
             <p>We couldn't whip up any recipes right now. Try again, tweak your pantry, or come back in a moment.</p>
             <button type="button" class="more-btn" onclick="showRecipes()">Try again</button>
         </div>`;
     }
     return `<div class="empty">
-        <div class="empty-icon">🍃</div>
+        <span class="material-symbols-rounded empty-icon" aria-hidden="true">eco</span>
         <h3>No recipes to show</h3>
         <p>Try adjusting your pantry — even one or two extra ingredients can unlock new ideas.</p>
     </div>`;
@@ -932,7 +929,7 @@ function renderPantry() {
         const remove = document.createElement("button");
         remove.type = "button";
         remove.setAttribute("aria-label", `Remove ${item}`);
-        remove.textContent = "×";
+        remove.innerHTML = '<span class="material-symbols-rounded" aria-hidden="true">close</span>';
         remove.addEventListener("click", () => {
             pantry.delete(item);
             renderPantry();
@@ -1004,7 +1001,7 @@ async function showRecipes(append = false) {
     if (oldMore) oldMore.remove();
     const moreWrap = document.createElement("div");
     moreWrap.id = "generate-more-wrap";
-    moreWrap.innerHTML = `<button class="more-btn" type="button">✨ Generate more recipes</button>`;
+    moreWrap.innerHTML = `<button class="more-btn" type="button"><span class="material-symbols-rounded btn-icon" aria-hidden="true">auto_awesome</span>Generate more recipes</button>`;
     moreWrap.querySelector(".more-btn").addEventListener("click", async (e) => {
         const btn = e.currentTarget;
         btn.disabled = true;
@@ -1014,7 +1011,7 @@ async function showRecipes(append = false) {
             const newBtn = document.querySelector("#generate-more-wrap .more-btn");
             if (newBtn) {
                 newBtn.disabled = false;
-                newBtn.innerHTML = "✨ Generate more recipes";
+                newBtn.innerHTML = '<span class="material-symbols-rounded btn-icon" aria-hidden="true">auto_awesome</span>Generate more recipes';
             }
         }
     });
@@ -1032,7 +1029,7 @@ function openFullRecipe(recipe) {
     overlay.setAttribute("aria-modal", "true");
     overlay.innerHTML = `
         <div class="modal" role="document">
-            <button class="modal-close" type="button" aria-label="Close">×</button>
+            <button class="modal-close" type="button" aria-label="Close"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
             <div class="modal-loading">
                 <div class="ai-orb"><span></span><span></span><span></span></div>
                 <p class="loading-title">Generating <em>${recipe.name}</em>…</p>
@@ -1098,18 +1095,18 @@ function renderRecipeContent(overlay, recipe) {
     let currentServes = baseServes;
 
     modal.innerHTML = `
-        <button class="modal-close" type="button" aria-label="Close">×</button>
+        <button class="modal-close" type="button" aria-label="Close"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
         <div class="modal-content">
-            <div class="ai-tag">✨ Generated for your pantry</div>
+            <div class="ai-tag"><span class="material-symbols-rounded chip-icon" aria-hidden="true">auto_awesome</span>Generated for your pantry</div>
             <div class="recipe-title-row">
                 <h2 class="recipe-title">${recipe.name}</h2>
                 <div class="modal-fav">${heartButtonHTML(recipe)}</div>
             </div>
             <div class="recipe-meta">
                 <div class="serves-adjuster" aria-label="Adjust serving size">
-                    <button type="button" class="serves-btn" data-action="dec" aria-label="Decrease serves">−</button>
+                    <button type="button" class="serves-btn" data-action="dec" aria-label="Decrease serves"><span class="material-symbols-rounded" aria-hidden="true">remove</span></button>
                     <span class="serves-value"><strong id="serves-count">${currentServes}</strong> serves</span>
-                    <button type="button" class="serves-btn" data-action="inc" aria-label="Increase serves">+</button>
+                    <button type="button" class="serves-btn" data-action="inc" aria-label="Increase serves"><span class="material-symbols-rounded" aria-hidden="true">add</span></button>
                 </div>
                 <span class="dot"></span>
                 <span><strong>${d.prep}</strong> min prep</span>
@@ -1200,7 +1197,7 @@ function renderIngredients(items, baseIngredients, have, scale) {
             (base) => have.includes(base) && scaled.toLowerCase().includes(base.toLowerCase())
         );
         return `<li class="${matched ? "in-pantry" : ""}">
-            <span class="check">${matched ? "✓" : "•"}</span>
+            <span class="check"><span class="material-symbols-rounded" aria-hidden="true">${matched ? "check" : "circle"}</span></span>
             <span>${scaled}</span>
         </li>`;
     }).join("");
@@ -1283,7 +1280,7 @@ function scaleIngredient(ingredient, scale) {
 function renderTimer(seconds, idx) {
     return `
         <div class="timer" data-seconds="${seconds}" data-idx="${idx}">
-            <span class="timer-icon">⏱</span>
+            <span class="timer-icon material-symbols-rounded" aria-hidden="true">timer</span>
             <span class="timer-display">${formatTime(seconds)}</span>
             <button type="button" class="timer-btn" data-action="start">Start</button>
         </div>
