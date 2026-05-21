@@ -649,6 +649,26 @@ let suggestionSeed = 0;
 
 function stripFences(s) { return s.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim(); }
 
+// Extract a JSON object from a possibly-noisy model response (reasoning tags, prose, fences, etc.)
+function extractJson(raw) {
+    if (!raw) return null;
+    let s = String(raw);
+    // Drop any <think>...</think> blocks that reasoning models emit
+    s = s.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+    // Strip markdown code fences if present
+    s = stripFences(s);
+    // Try direct parse first
+    try { return JSON.parse(s); } catch (e) { /* fall through */ }
+    // Fall back to grabbing the largest {...} block
+    const first = s.indexOf("{");
+    const last = s.lastIndexOf("}");
+    if (first >= 0 && last > first) {
+        const slice = s.slice(first, last + 1);
+        try { return JSON.parse(slice); } catch (e) { /* fall through */ }
+    }
+    return null;
+}
+
 async function aiSuggestions(have, count) {
     suggestionSeed++;
     const pantryList = have.length ? have.join(", ") : "common pantry staples";
@@ -677,7 +697,12 @@ Return ONLY valid JSON in this schema:
     });
     if (!res.ok) throw new Error("API " + res.status);
     const data = await res.json();
-    const parsed = JSON.parse(stripFences(data.choices?.[0]?.message?.content || "{}"));
+    const rawContent = data.choices?.[0]?.message?.content || "";
+    const parsed = extractJson(rawContent);
+    if (!parsed) {
+        console.warn("aiSuggestions: could not parse JSON. Raw response:", rawContent);
+        throw new Error("Invalid JSON from AI");
+    }
     const recipes = (parsed.recipes || []).map((r) => ({
         name: r.name,
         ingredients: (r.ingredients || []).map((i) => String(i).toLowerCase()),
@@ -762,7 +787,11 @@ Now produce the JSON for "${recipe.name}" at the same level of detail. Return ON
     });
     if (!res.ok) throw new Error("API " + res.status);
     const data = await res.json();
-    const parsed = JSON.parse(stripFences(data.choices?.[0]?.message?.content || "{}"));
+    const rawContent = data.choices?.[0]?.message?.content || "";
+    const parsed = extractJson(rawContent) || {};
+    if (!parsed.ingredientsDetailed) {
+        console.warn("aiFullRecipe: could not parse JSON. Raw response:", rawContent);
+    }
     const detailed = {
         serves: parsed.serves || 2,
         prep: parsed.prep || 0,
