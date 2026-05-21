@@ -179,7 +179,7 @@ h2 em {
 
 .hint {
     color: var(--muted-strong);
-    margin: 0;
+    margin: 0.75rem 0 0;
     font-size: 0.95rem;
 }
 
@@ -188,11 +188,10 @@ h2 em {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 2rem;
+    padding: 2.25rem;
     box-shadow: var(--shadow);
-    margin-top: -3rem;
     position: relative;
-    z-index: 2;
+    z-index: 1;
 }
 
 .ingredient-form {
@@ -346,12 +345,9 @@ h2 em {
     min-height: 2.25rem;
 }
 
-.ingredient-list:empty::before {
-    content: "Your pantry is empty — add an ingredient above.";
-    color: var(--muted);
-    font-size: 0.9rem;
-    font-style: italic;
-    padding: 0.4rem 0;
+.ingredient-list:empty {
+    min-height: 0;
+    margin: 0;
 }
 
 .ingredient-list li {
@@ -454,56 +450,18 @@ h2 em {
     overflow: hidden;
 }
 
-.recipe-card-image {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 3 / 2;
-    background: linear-gradient(135deg, var(--accent-light) 0%, var(--bg-soft) 100%);
-    overflow: hidden;
-}
-
-.recipe-card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    opacity: 0;
-    transition: opacity 0.4s ease, transform 0.5s ease;
-    transform: scale(1.02);
-}
-
-.recipe-card-image img.loaded {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.img-skeleton {
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(110deg, var(--accent-light) 30%, #ecf7f0 50%, var(--accent-light) 70%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s ease-in-out infinite;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    color: var(--accent-dark);
-    opacity: 0.8;
-}
-
-.recipe-card-image img.loaded ~ .img-skeleton {
-    display: none;
-}
-
 @keyframes shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
 
-.recipe-card-image.img-fallback .img-skeleton {
-    animation: none;
-    background: linear-gradient(135deg, var(--accent-light) 0%, var(--bg-soft) 100%);
+.recipe-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    min-height: 2.1rem;
 }
 
 /* ---------- Tabs ---------- */
@@ -597,26 +555,6 @@ h2 em {
     margin-right: 0.4rem;
 }
 
-.fallback-icon {
-    font-size: 2.5rem !important;
-    color: var(--muted);
-}
-
-.tab .tab-count {
-    background: rgba(255, 255, 255, 0.85);
-    color: var(--accent-darker);
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 0.1rem 0.5rem;
-    border-radius: 999px;
-    line-height: 1.4;
-}
-
-.tab:not(.active) .tab-count {
-    background: var(--accent-light);
-    color: var(--accent-darker);
-}
-
 .tab-panel {
     animation: contentIn 0.25s ease-out;
 }
@@ -650,25 +588,19 @@ h2 em {
 
 /* ---------- Heart / favourite button ---------- */
 .fav-btn {
-    position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
     width: 2.1rem;
     height: 2.1rem;
     border-radius: 50%;
     border: none;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: var(--bg-soft);
     color: #c0392b;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    z-index: 2;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
     transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
     padding: 0;
+    flex-shrink: 0;
 }
 
 .fav-btn .material-symbols-rounded {
@@ -680,8 +612,7 @@ h2 em {
 
 .fav-btn:hover {
     transform: scale(1.1);
-    background: #fff;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+    background: var(--accent-light);
 }
 
 .fav-btn.active .material-symbols-rounded {
@@ -729,23 +660,17 @@ h2 em {
 }
 
 .time-chip {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    background: rgba(15, 36, 23, 0.78);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    color: #fff;
+    background: var(--accent-light);
+    color: var(--accent-darker);
     padding: 0.3rem 0.65rem;
     border-radius: 999px;
     font-size: 0.78rem;
     font-weight: 600;
     letter-spacing: 0.2px;
-    z-index: 1;
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+    border: 1px solid var(--chip-border);
 }
 
 .recipe-card-body {
@@ -1056,6 +981,42 @@ h2 em {
     100% { transform: translateX(350%); }
 }
 
+/* ---------- Recipe hero image ---------- */
+.recipe-hero {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 20 / 9;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--accent-light) 0%, var(--bg-soft) 100%);
+}
+
+.recipe-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.6s ease;
+    transform: scale(1.03);
+}
+
+.recipe-hero img.loaded {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.hero-skeleton {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, var(--accent-light) 30%, #ecf7f0 50%, var(--accent-light) 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.recipe-hero img.loaded ~ .hero-skeleton {
+    display: none;
+}
+
 /* ---------- Modal content ---------- */
 .modal-content {
     padding: 2.5rem 2.5rem 2.75rem;
@@ -1275,6 +1236,12 @@ h2 em {
     grid-template-columns: 2.25rem 1fr;
     gap: 0.85rem;
     align-items: flex-start;
+    cursor: pointer;
+    border-radius: 12px;
+    padding: 0.4rem 0.5rem;
+    margin: -0.4rem -0.5rem;
+    transition: background-color 0.18s ease, opacity 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .step-num {
@@ -1290,6 +1257,7 @@ h2 em {
     font-family: "Fraunces", Georgia, serif;
     font-size: 1rem;
     flex-shrink: 0;
+    transition: background-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
 }
 
 .step-body p {
@@ -1297,6 +1265,41 @@ h2 em {
     color: var(--text-soft);
     font-size: 0.98rem;
     line-height: 1.6;
+    transition: color 0.25s ease, opacity 0.25s ease;
+}
+
+.step.done .step-body p {
+    color: var(--muted);
+    opacity: 0.65;
+}
+
+/* Number / check swap inside the step-num bubble */
+.step-num-text,
+.step-num-check {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.step-num-text { opacity: 1; }
+.step-num-check {
+    position: absolute;
+    opacity: 0;
+    transform: scale(0.6);
+    font-size: 20px;
+    font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
+}
+.step-num {
+    position: relative;
+}
+.step.done .step-num {
+    background: var(--accent);
+    color: #fff;
+}
+.step.done .step-num-text {
+    opacity: 0;
+    transform: scale(0.6);
+}
+.step.done .step-num-check {
+    opacity: 1;
+    transform: scale(1);
 }
 
 /* Timer */
@@ -1336,13 +1339,24 @@ h2 em {
     background: var(--accent-darker);
     color: #fff;
     border: none;
-    padding: 0.3rem 0.85rem;
-    border-radius: 999px;
-    font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 600;
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    border-radius: 50%;
     cursor: pointer;
-    transition: background 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.timer-btn:active {
+    transform: scale(0.92);
+}
+
+.timer-btn .material-symbols-rounded {
+    font-size: 18px;
+    font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
 }
 
 .timer-btn:hover {
@@ -1405,6 +1419,10 @@ h2 em {
     gap: 0.5rem;
 }
 
+.empty[hidden] {
+    display: none;
+}
+
 .empty-icon {
     font-size: 3rem !important;
     color: var(--accent);
@@ -1437,10 +1455,6 @@ h2 em {
 /* ---------- Skeleton loading cards ---------- */
 .skeleton-card {
     pointer-events: none;
-}
-
-.skeleton-card .recipe-card-image .img-skeleton {
-    color: transparent;
 }
 
 .sk-line {
@@ -1599,7 +1613,7 @@ footer p {
     .hero { padding: 3rem 0 3rem; }
     .hero h1 { font-size: 2.8rem; letter-spacing: -1.2px; }
     .tagline { font-size: 1.6rem; }
-    .pantry { padding: 1.5rem; margin-top: -2rem; }
+    .pantry { padding: 1.5rem; }
     h2 { font-size: 1.5rem; }
     .ingredient-form { flex-direction: column; }
     .ingredient-form button { padding: 0.85rem; }

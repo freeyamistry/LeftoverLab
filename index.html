@@ -6,8 +6,8 @@
     <title>Leftover Lab — Recipes from what you've got</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://image.pollinations.ai">
     <link rel="preconnect" href="https://text.pollinations.ai">
+    <link rel="preconnect" href="https://image.pollinations.ai">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=DM+Sans:wght@400;500;600;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
@@ -30,8 +30,7 @@
             </button>
             <button class="tab" role="tab" aria-selected="false" data-tab="favourites" id="tab-favourites">
                 <span class="material-symbols-rounded tab-icon" aria-hidden="true">favorite</span>
-                Favourites
-                <span id="tab-fav-count" class="tab-count" hidden>0</span>
+                Favourites<span id="tab-fav-count" class="tab-fav-count" hidden></span>
             </button>
         </nav>
 
@@ -61,7 +60,7 @@
 
                 <ul id="ingredient-list" class="ingredient-list" aria-live="polite"></ul>
 
-                <button id="find-recipes" class="primary-btn" disabled>Find recipes</button>
+                <button id="find-recipes" class="primary-btn" disabled hidden>Find recipes</button>
             </section>
 
             <section id="results" class="results" aria-live="polite"></section>
@@ -69,18 +68,17 @@
 
         <div id="panel-favourites" class="tab-panel" role="tabpanel" aria-labelledby="tab-favourites" hidden>
             <div class="favourites-header">
-                <h2><span class="material-symbols-rounded heading-icon" aria-hidden="true">favorite</span>My <em>favourites</em></h2>
+                <h2>My Favourites</h2>
                 <span id="favourites-count" class="favourites-count"></span>
             </div>
             <div id="favourites-grid" class="results"></div>
             <div id="favourites-empty" class="empty" hidden>
                 <span class="material-symbols-rounded empty-icon" aria-hidden="true">favorite</span>
                 <h3>No favourites yet</h3>
-                <p>Tap the heart on any recipe to save it here. Your favourites stick around even after you close the page.</p>
+                <p>Search and save your favourite recipes to revisit them here.</p>
             </div>
         </div>
     </main>
-
     <script src="app.js"></script>
 </body>
 </html>

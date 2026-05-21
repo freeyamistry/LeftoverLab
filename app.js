@@ -569,8 +569,8 @@ function renderFavourites() {
     if (!grid) return;
     const items = Array.from(favourites.values()).sort((a, b) => b.savedAt - a.savedAt);
     if (tabCount) {
-        if (items.length > 0) { tabCount.hidden = false; tabCount.textContent = items.length; }
-        else tabCount.hidden = true;
+        if (items.length > 0) { tabCount.hidden = false; tabCount.textContent = ` (${items.length})`; }
+        else { tabCount.hidden = true; tabCount.textContent = ""; }
     }
     if (items.length === 0) {
         grid.innerHTML = ""; grid.hidden = true;
@@ -616,35 +616,23 @@ function buildRecipeCard(r, idx, isFav = false) {
     const matched = (r.ingredients || []).filter((ing) => have.includes(String(ing).toLowerCase()));
     const pct = r.ingredients?.length ? Math.round((matched.length / r.ingredients.length) * 100) : 0;
     const totalTime = r.totalMinutes || ((r.detailed?.prep || 0) + (r.detailed?.cook || 0));
-    if (!r.imgSeed) r.imgSeed = idx + 1 + Math.floor(Math.random() * 1000);
-    const imgPrompt = encodeURIComponent(`${r.name}, food photo, top down, plate`);
-    const imgUrl = `https://image.pollinations.ai/prompt/${imgPrompt}?width=384&height=256&model=turbo&enhance=false&nofeed=true&nologo=true&seed=${r.imgSeed}`;
     const showMatch = pantry.size > 0 && (r.ingredients?.length || 0) > 0;
     card.innerHTML = `
-        <div class="recipe-card-image">
-            <div class="img-skeleton"></div>
-            <img alt="${r.name}" loading="lazy" src="${imgUrl}" />
-            ${heartButtonHTML(r)}
-            ${totalTime ? `<span class="time-chip"><span class="material-symbols-rounded chip-icon" aria-hidden="true">schedule</span>${totalTime} min</span>` : ""}
-        </div>
         <div class="recipe-card-body">
+            <div class="recipe-card-header">
+                ${heartButtonHTML(r)}
+                ${totalTime ? `<span class="time-chip"><span class="material-symbols-rounded chip-icon" aria-hidden="true">schedule</span>${totalTime} min</span>` : ""}
+            </div>
             <h3>${r.name}</h3>
             ${showMatch
                 ? `<p class="match"><span class="material-symbols-rounded match-icon" aria-hidden="true">check_circle</span>${matched.length}/${r.ingredients.length} ingredients · ${pct}% match</p>
                    <div class="match-bar"><div class="match-bar-fill" style="width:${pct}%"></div></div>`
                 : `<p class="match saved-meta">Saved ${formatSavedAt(r.savedAt)}</p>`}
             <strong>Ingredients</strong>
-            <ul>${(r.ingredients || []).map((i) => `<li class="${have.includes(String(i).toLowerCase()) ? "have" : "miss"}">${i}</li>`).join("")}</ul>
+            <ul>${(r.ingredients || []).map((i) => isFav ? `<li>${i}</li>` : `<li class="${have.includes(String(i).toLowerCase()) ? "have" : "miss"}">${i}</li>`).join("")}</ul>
             <button class="generate-btn" type="button">${r.detailed ? "View full recipe" : "Generate full recipe"}</button>
         </div>
     `;
-    const img = card.querySelector("img");
-    img.addEventListener("load", () => img.classList.add("loaded"));
-    img.addEventListener("error", () => {
-        const wrap = card.querySelector(".recipe-card-image");
-        wrap.classList.add("img-fallback");
-        wrap.querySelector(".img-skeleton").innerHTML = '<span class="material-symbols-rounded fallback-icon" aria-hidden="true">restaurant</span>';
-    });
     attachHeartHandler(card.querySelector(".fav-btn"), r);
     card.querySelector(".generate-btn").addEventListener("click", () => openFullRecipe(r));
     card.addEventListener("click", (e) => {
@@ -703,26 +691,73 @@ Return ONLY valid JSON in this schema:
 async function aiFullRecipe(recipe, have) {
     const cacheKey = recipe.name.toLowerCase();
     if (fullRecipeCache.has(cacheKey)) return fullRecipeCache.get(cacheKey);
-    const prompt = `Generate a complete recipe card for "${recipe.name}".
-Pantry: ${have.join(", ") || "common staples"}.
-Return ONLY valid JSON:
-{"serves":2,"prep":5,"cook":12,"ingredientsDetailed":["200g spaghetti","60g butter"],"instructions":[{"text":"Step description","timer":540}]}
-Rules:
-- Quantities must include units.
-- "timer" is STRICTLY OPTIONAL — only include if step text explicitly mentions a number + time unit (e.g. "5 minutes", "30 seconds").
-- DO NOT add timer for chopping, mixing, plating, "until soft", "until golden", etc.
-- Only 1–3 timers per recipe.
-- 5–7 instructions total.`;
+
+    const example = {
+        serves: 2,
+        prep: 5,
+        cook: 12,
+        ingredientsDetailed: [
+            "200g spaghetti or linguine",
+            "60g unsalted butter",
+            "4 cloves garlic, finely minced",
+            "Small handful flat-leaf parsley, chopped",
+            "1 tsp flaky sea salt",
+            "Freshly cracked black pepper",
+            "Optional: pinch of chilli flakes, grated parmesan"
+        ],
+        instructions: [
+            { text: "Bring a large pot of well-salted water to a rolling boil." },
+            { text: "Add pasta and cook until al dente (check packet — usually around 9 minutes).", timer: 540 },
+            { text: "Meanwhile, melt butter in a wide pan over low-medium heat. Add minced garlic and gently sizzle until fragrant and just golden — do not brown.", timer: 120 },
+            { text: "Reserve ½ cup of pasta water, then drain pasta." },
+            { text: "Tip pasta into the garlic butter, add a splash of pasta water and toss vigorously for 1 minute until the sauce clings glossy.", timer: 60 },
+            { text: "Off the heat, fold through parsley, salt and pepper. Plate and finish with extra parsley and parmesan if you like." }
+        ]
+    };
+
+    const prompt = `Generate a complete, restaurant-quality recipe card for "${recipe.name}".
+Pantry the cook already has: ${have.join(", ") || "common staples"}.
+Likely key ingredients: ${(recipe.ingredients || []).join(", ") || "use your judgement"}.
+
+Return ONLY valid JSON in EXACTLY this shape (no extra fields):
+{
+  "serves": <integer, usually 2 or 4>,
+  "prep": <minutes, integer>,
+  "cook": <minutes, integer>,
+  "ingredientsDetailed": [ "string", ... ],
+  "instructions": [ { "text": "string", "timer": <seconds, optional> }, ... ]
+}
+
+INGREDIENT RULES (ingredientsDetailed):
+- 7 to 11 ingredients. Cover everything the steps reference.
+- EVERY measurable ingredient MUST start with a number + unit so it can be scaled (e.g. "200g", "1 tbsp", "2 cloves", "1 small", "400ml", "¼ cup"). Use metric.
+- Include prep notes after a comma where useful (e.g. "1 brown onion, finely diced", "3 cloves garlic, minced", "400g chicken thigh, sliced thin").
+- Unmeasurable seasonings can be plain (e.g. "Flaky sea salt", "Freshly cracked black pepper", "Small handful flat-leaf parsley, chopped").
+- The LAST item may be an "Optional: ..." line listing 1–3 tasty add-ons.
+- Prefer pantry items where possible; if the recipe needs something not in the pantry, still include it.
+
+INSTRUCTION RULES (instructions):
+- 5 to 8 numbered steps. Each step is one clear action with sensory cues ("until fragrant", "until just golden", "edges look translucent").
+- Mention temperatures, heat levels and pan/pot sizes where it matters.
+- "timer" (in seconds) is OPTIONAL. ONLY include it when the step text explicitly states a number + time unit ("for 5 minutes", "30 seconds", "12 minutes"). NEVER add a timer for chopping, mixing, plating, "until soft", or vague durations.
+- Maximum 3 timers per recipe.
+
+Here is a reference example showing the level of detail expected for "Garlic Butter Pasta":
+${JSON.stringify(example, null, 2)}
+
+Now produce the JSON for "${recipe.name}" at the same level of detail. Return ONLY the JSON object, no prose, no markdown.`;
+
     const res = await fetch(POLLI_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             model: "openai",
             messages: [
-                { role: "system", content: "You are a recipe API that returns strict JSON only." },
+                { role: "system", content: "You are a precise recipe-card API. You always respond with a single valid JSON object that matches the schema given by the user — no markdown, no commentary." },
                 { role: "user", content: prompt }
             ],
-            response_format: { type: "json_object" }
+            response_format: { type: "json_object" },
+            temperature: 0.7
         })
     });
     if (!res.ok) throw new Error("API " + res.status);
@@ -857,13 +892,12 @@ function filterIngredients(query) {
 }
 
 function renderSuggestions(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) { closeSuggestions(); return; }
     const matches = filterIngredients(query);
     currentMatches = matches.slice();
     activeIdx = -1;
-    const q = query.trim().toLowerCase();
-    const exactMatch = q && INGREDIENTS.includes(q);
-
-    if (matches.length === 0 && !q) { closeSuggestions(); return; }
+    const exactMatch = INGREDIENTS.includes(q);
 
     let html = matches.map((m, i) => {
         let label = m;
@@ -905,7 +939,6 @@ function setActiveSuggestion(idx) {
 }
 
 input.addEventListener("input", () => renderSuggestions(input.value));
-input.addEventListener("focus", () => renderSuggestions(input.value));
 input.addEventListener("keydown", (e) => {
     if (suggestionsEl.hidden) return;
     if (e.key === "ArrowDown") { e.preventDefault(); setActiveSuggestion(Math.min(currentMatches.length - 1, activeIdx + 1)); }
@@ -937,7 +970,9 @@ function renderPantry() {
         li.appendChild(remove);
         list.appendChild(li);
     });
-    findBtn.disabled = pantry.size === 0;
+    const empty = pantry.size === 0;
+    findBtn.disabled = empty;
+    findBtn.hidden = empty;
 }
 
 async function showRecipes(append = false) {
@@ -950,7 +985,6 @@ async function showRecipes(append = false) {
             sk.className = "recipe-card skeleton-card";
             sk.style.animationDelay = `${i * 60}ms`;
             sk.innerHTML = `
-                <div class="recipe-card-image"><div class="img-skeleton"></div></div>
                 <div class="recipe-card-body">
                     <div class="sk-line sk-title"></div>
                     <div class="sk-line sk-short"></div>
@@ -1094,8 +1128,15 @@ function renderRecipeContent(overlay, recipe) {
     const baseServes = d.serves;
     let currentServes = baseServes;
 
+    if (!recipe.imgSeed) recipe.imgSeed = Math.floor(Math.random() * 10000);
+    const heroPrompt = encodeURIComponent(`${recipe.name}, food photo, top down, plate`);
+    const heroUrl = `https://image.pollinations.ai/prompt/${heroPrompt}?width=800&height=420&model=turbo&enhance=false&nofeed=true&nologo=true&seed=${recipe.imgSeed}`;
     modal.innerHTML = `
         <button class="modal-close" type="button" aria-label="Close"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+        <div class="recipe-hero">
+            <div class="hero-skeleton"></div>
+            <img alt="${recipe.name}" src="${heroUrl}" />
+        </div>
         <div class="modal-content">
             <div class="recipe-title-row">
                 <h2 class="recipe-title">${recipe.name}</h2>
@@ -1126,7 +1167,10 @@ function renderRecipeContent(overlay, recipe) {
                     <ol>
                         ${d.instructions.map((step, i) => `
                             <li class="step">
-                                <span class="step-num">${i + 1}</span>
+                                <span class="step-num">
+                                    <span class="step-num-text">${i + 1}</span>
+                                    <span class="material-symbols-rounded step-num-check" aria-hidden="true">check</span>
+                                </span>
                                 <div class="step-body">
                                     <p>${step.text}</p>
                                     ${step.timer ? renderTimer(step.timer, i) : ""}
@@ -1149,6 +1193,13 @@ function renderRecipeContent(overlay, recipe) {
         }, 200);
     };
     modal.querySelector(".modal-close").addEventListener("click", close);
+
+    // Hero image — fade in on load, hide block on error
+    const heroImg = modal.querySelector(".recipe-hero img");
+    heroImg.addEventListener("load", () => heroImg.classList.add("loaded"));
+    heroImg.addEventListener("error", () => {
+        modal.querySelector(".recipe-hero").remove();
+    });
 
     // Modal heart
     const modalFav = modal.querySelector(".modal-fav .fav-btn");
@@ -1187,6 +1238,14 @@ function renderRecipeContent(overlay, recipe) {
 
     // Wire up timers
     modal.querySelectorAll(".timer").forEach((t) => attachTimer(t));
+
+    // Tap a step to mark it done (toggles strikethrough)
+    modal.querySelectorAll(".step").forEach((stepEl) => {
+        stepEl.addEventListener("click", (e) => {
+            if (e.target.closest(".timer")) return;
+            stepEl.classList.toggle("done");
+        });
+    });
 }
 
 function renderIngredients(items, baseIngredients, have, scale) {
@@ -1281,9 +1340,16 @@ function renderTimer(seconds, idx) {
         <div class="timer" data-seconds="${seconds}" data-idx="${idx}">
             <span class="timer-icon material-symbols-rounded" aria-hidden="true">timer</span>
             <span class="timer-display">${formatTime(seconds)}</span>
-            <button type="button" class="timer-btn" data-action="start">Start</button>
+            <button type="button" class="timer-btn" data-action="start" aria-label="Start timer">
+                <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+            </button>
         </div>
     `;
+}
+
+function setTimerBtn(btn, icon, label) {
+    btn.innerHTML = `<span class="material-symbols-rounded" aria-hidden="true">${icon}</span>`;
+    btn.setAttribute("aria-label", label);
 }
 
 function formatTime(seconds) {
@@ -1309,7 +1375,7 @@ function attachTimer(timerEl) {
 
     const start = () => {
         state = "running";
-        btn.textContent = "Pause";
+        setTimerBtn(btn, "pause", "Pause timer");
         timerEl.classList.add("running");
         timerEl.classList.remove("done");
         intervalId = setInterval(() => {
@@ -1321,7 +1387,7 @@ function attachTimer(timerEl) {
                 state = "done";
                 timerEl.classList.remove("running");
                 timerEl.classList.add("done");
-                btn.textContent = "Reset";
+                setTimerBtn(btn, "refresh", "Reset timer");
                 display.textContent = "Done!";
                 ding();
             }
@@ -1333,7 +1399,7 @@ function attachTimer(timerEl) {
         state = "paused";
         clearInterval(intervalId);
         activeTimers.delete(idx);
-        btn.textContent = "Resume";
+        setTimerBtn(btn, "play_arrow", "Resume timer");
         timerEl.classList.remove("running");
     };
 
@@ -1343,7 +1409,7 @@ function attachTimer(timerEl) {
         remaining = total;
         state = "idle";
         timerEl.classList.remove("running", "done");
-        btn.textContent = "Start";
+        setTimerBtn(btn, "play_arrow", "Start timer");
         update();
     };
 
@@ -1356,33 +1422,41 @@ function attachTimer(timerEl) {
     });
 }
 
-function ding() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.connect(g);
-        g.connect(ctx.destination);
-        o.type = "sine";
-        o.frequency.value = 880;
-        g.gain.setValueAtTime(0.15, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-        o.start();
-        o.stop(ctx.currentTime + 0.6);
-        // second tone
-        setTimeout(() => {
-            const o2 = ctx.createOscillator();
-            const g2 = ctx.createGain();
-            o2.connect(g2);
-            g2.connect(ctx.destination);
-            o2.type = "sine";
-            o2.frequency.value = 1175;
-            g2.gain.setValueAtTime(0.15, ctx.currentTime);
-            g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-            o2.start();
-            o2.stop(ctx.currentTime + 0.6);
-        }, 220);
-    } catch (e) {
-        // ignore — audio just won't play
+let _audioCtx = null;
+function getAudioCtx() {
+    if (!_audioCtx) {
+        try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch (e) { return null; }
     }
+    if (_audioCtx.state === "suspended") _audioCtx.resume();
+    return _audioCtx;
 }
+
+function playTone(ctx, freq, startOffset, duration, volume = 0.25) {
+    const t0 = ctx.currentTime + startOffset;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = "sine";
+    o.frequency.value = freq;
+    // quick attack, smooth decay
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(volume, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    o.start(t0);
+    o.stop(t0 + duration + 0.05);
+}
+
+function ding() {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    // 3-tone ascending chime, twice, for a clear "your timer is up" feel
+    [0, 0.9].forEach((offset) => {
+        playTone(ctx, 880,  offset,         0.28);
+        playTone(ctx, 1175, offset + 0.18,  0.28);
+        playTone(ctx, 1568, offset + 0.36,  0.45, 0.3);
+    });
+}
+
+// Prime audio context on first user gesture (some browsers block otherwise)
+window.addEventListener("pointerdown", () => getAudioCtx(), { once: true });
