@@ -531,13 +531,13 @@ function updateHeartBtn(btn) {
     const active = favourites.has(btn.dataset.favKey);
     btn.classList.toggle("active", active);
     btn.setAttribute("aria-pressed", String(active));
-    btn.setAttribute("aria-label", active ? "Remove from favourites" : "Save to favourites");
+    btn.setAttribute("aria-label", active ? "Remove from saved" : "Save recipe");
 }
 
 function heartButtonHTML(recipe) {
     const key = favKey(recipe);
     const active = favourites.has(key);
-    return `<button type="button" class="fav-btn ${active ? "active" : ""}" data-fav-key="${key}" aria-pressed="${active}" aria-label="${active ? "Remove from favourites" : "Save to favourites"}">
+    return `<button type="button" class="fav-btn ${active ? "active" : ""}" data-fav-key="${key}" aria-pressed="${active}" aria-label="${active ? "Remove from saved" : "Save recipe"}">
         <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
     </button>`;
 }
@@ -1169,7 +1169,6 @@ function renderRecipeContent(overlay, recipe) {
         <div class="modal-content">
             <div class="recipe-title-row">
                 <h2 class="recipe-title">${recipe.name}</h2>
-                <div class="modal-fav">${heartButtonHTML(recipe)}</div>
             </div>
             <div class="recipe-meta">
                 <div class="serves-adjuster" aria-label="Adjust serving size">
@@ -1182,6 +1181,8 @@ function renderRecipeContent(overlay, recipe) {
                 <span class="dot"></span>
                 <span><strong>${d.cook}</strong> min cook</span>
             </div>
+
+            <div class="modal-fav">${heartButtonHTML(recipe)}</div>
 
             <div class="recipe-grid">
                 <aside class="recipe-ingredients">
