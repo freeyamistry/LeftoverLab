@@ -387,6 +387,11 @@ h2 em {
     transition: background 0.15s ease;
 }
 
+.ingredient-list button .material-symbols-rounded {
+    font-size: 16px;
+    font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 20;
+}
+
 .ingredient-list button:hover {
     background: var(--accent);
     color: #fff;

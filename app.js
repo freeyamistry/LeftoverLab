@@ -507,6 +507,17 @@ function saveFavourites() {
 function favKey(recipe) { return recipe.name.toLowerCase().trim(); }
 function cssEscape(s) { return s.replace(/["\\]/g, "\\$&"); }
 
+// Deterministic image seed derived from the recipe name, so the same recipe
+// always produces the same hero image everywhere (card data, modal, favourites).
+function seedFromName(name) {
+    const s = String(name || "").toLowerCase().trim();
+    let hash = 0;
+    for (let i = 0; i < s.length; i++) {
+        hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
+    }
+    return hash % 100000;
+}
+
 function toggleFavourite(recipe) {
     const key = favKey(recipe);
     if (favourites.has(key)) {
@@ -519,7 +530,7 @@ function toggleFavourite(recipe) {
             totalMinutes: recipe.totalMinutes || ((recipe.detailed?.prep || 0) + (recipe.detailed?.cook || 0)),
             detailed: recipe.detailed || null,
             savedAt: Date.now(),
-            imgSeed: recipe.imgSeed || Math.floor(Math.random() * 10000)
+            imgSeed: seedFromName(recipe.name)
         });
     }
     saveFavourites();
@@ -740,9 +751,12 @@ async function aiFullRecipe(recipe, have) {
         ]
     };
 
+    const keyIngredients = (recipe.ingredients || []).join(", ");
     const prompt = `Generate a complete, restaurant-quality recipe card for "${recipe.name}".
 Pantry the cook already has: ${have.join(", ") || "common staples"}.
-Likely key ingredients: ${(recipe.ingredients || []).join(", ") || "use your judgement"}.
+${keyIngredients
+    ? `This recipe was suggested with these exact key ingredients: ${keyIngredients}. The detailed recipe MUST be built around them.`
+    : "Use your judgement for the key ingredients."}
 
 Return ONLY valid JSON in EXACTLY this shape (no extra fields):
 {
@@ -755,6 +769,7 @@ Return ONLY valid JSON in EXACTLY this shape (no extra fields):
 
 INGREDIENT RULES (ingredientsDetailed):
 - 7 to 11 ingredients. Cover everything the steps reference.
+${keyIngredients ? `- EVERY key ingredient listed above (${keyIngredients}) MUST appear in ingredientsDetailed with a quantity. Do not omit or swap any of them, and do not introduce any other headline ingredient — only common pantry staples (salt, oil, water, basic herbs/spices) may be added.\n` : ""}
 - EVERY measurable ingredient MUST start with a number + unit so it can be scaled (e.g. "200g", "1 tbsp", "2 cloves", "1 small", "400ml", "¼ cup"). Use metric.
 - Include prep notes after a comma where useful (e.g. "1 brown onion, finely diced", "3 cloves garlic, minced", "400g chicken thigh, sliced thin").
 - Unmeasurable seasonings can be plain (e.g. "Flaky sea salt", "Freshly cracked black pepper", "Small handful flat-leaf parsley, chopped").
@@ -1056,7 +1071,7 @@ async function showRecipes(append = false) {
     if (usedLocalFallback) showToast("Showing local suggestions while the AI catches up.");
 
     suggestions.forEach((r, idx) => {
-        if (!r.imgSeed) r.imgSeed = idx + 1 + Math.floor(Math.random() * 1000);
+        r.imgSeed = seedFromName(r.name);
         results.appendChild(buildRecipeCard(r, idx));
     });
 
@@ -1157,7 +1172,7 @@ function renderRecipeContent(overlay, recipe) {
     const baseServes = d.serves;
     let currentServes = baseServes;
 
-    if (!recipe.imgSeed) recipe.imgSeed = Math.floor(Math.random() * 10000);
+    recipe.imgSeed = seedFromName(recipe.name);
     const heroPrompt = encodeURIComponent(`${recipe.name}, food photo, top down, plate`);
     const heroUrl = `https://image.pollinations.ai/prompt/${heroPrompt}?width=800&height=420&model=turbo&enhance=false&nofeed=true&nologo=true&seed=${recipe.imgSeed}`;
     modal.innerHTML = `
